@@ -1,0 +1,97 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r}
+library(tidyverse)
+library(rgdal)
+library(readr)
+library(maptools)
+library(spatstat.data)
+library(spatstat.utils)
+library(leaflet)
+library(htmltools)
+
+
+#country_visited <- read.csv('/Users/adsida/OneDrive/Code/Data/Country_Visit.csv')
+country_shape <- readOGR(dsn = "/Users/adsida/OneDrive/Code/Data/world_countries_2020.shp", GDAL1_integer64_policy = TRUE)
+#write.csv(country_shape@data,"/Users/adsida/OneDrive/Code/Data/shapedump.csv")
+#View(country_shape@data)
+country2 <- read.csv("/Users/adsida/OneDrive/Code/Data/shapedump.csv")
+
+
+country_data <- merge(country_shape, country2, by = "OBJECTID")
+country_data <- na.exclude(country_data)
+
+```
+
+Map of Country Data using comined visits/lives by AM and AD
+
+
+```{r}
+AM_bins <- c(0, 1, Inf)
+pal <- colorBin("YlOrRd", domain = country_data$AM_Vis, bins = AM_bins)
+AM_labels <- sprintf(
+  "<strong>%s<br> %s</strong>",
+  country_data$CNTRY_NAME.x, country_data$AM_lab
+) %>% lapply(htmltools::HTML)
+
+AM_map <-leaflet(country_data) %>% addTiles() %>% 
+  addPolygons(color = "#444444", weight = 1, smoothFactor = 0.5,
+              opacity = 1.0, fillOpacity = 0.5,
+              fillColor = ~pal(AM_Vis),
+              highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                  bringToFront = TRUE),
+              label = AM_labels)
+#AM_map
+
+
+AD_bins <- c(0, 2, Inf)
+pal <- colorBin("YlOrRd", domain = country_data$AD_Vis, bins = AD_bins)
+AD_labels <- sprintf(
+  "<strong>%s<br> %s</strong>",
+  country_data$CNTRY_NAME.x, country_data$AD_lab
+) %>% lapply(htmltools::HTML)
+
+AD_map <-leaflet(country_data) %>% addTiles() %>% 
+  addPolygons(color = "#444444", weight = 1, smoothFactor = 0.5,
+              opacity = 1.0, fillOpacity = 0.5,
+              fillColor = ~pal(AD_Vis),
+              highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                  bringToFront = TRUE),
+              label = AD_labels)
+#AD_map
+
+
+
+combined_bins <- c(0, 1, 2, 3, Inf)
+pal <- colorBin("YlOrRd", domain = country_data$Combined_Vis, bins = combined_bins)
+Combined_labels <- sprintf(
+  "<strong>AM: %s<br>AD: %s</strong>",
+  country_data$AM_lab, country_data$AD_lab
+) %>% lapply(htmltools::HTML)
+
+Combined_map <-leaflet(country_data) %>% addTiles() %>% 
+  addPolygons(color = "#444444", weight = 1, smoothFactor = 0.5,
+              opacity = 1.0, fillOpacity = 0.5,
+              fillColor = ~pal(Combined_Vis),
+              highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                  bringToFront = TRUE),
+              label = Combined_labels)
+#Combined_map
+
+
+```
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
